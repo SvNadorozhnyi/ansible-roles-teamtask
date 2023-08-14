@@ -1,0 +1,13 @@
+<VirtualHost *:80>
+    ServerName {{ inventory_hostname }}
+    DocumentRoot {{ app_directory }}/public
+
+    <Directory {{ app_directory }}/public>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
