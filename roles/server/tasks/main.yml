@@ -1,126 +1,128 @@
 ---
-    - name: Update package repositories
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
+- name: Update package repositories
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
 
-    - name: Remove libnode-dev
-      apt:
-        name: libnode-dev
-        state: absent
-        force: yes
-      ignore_errors: yes
+- name: Remove libnode-dev
+  apt:
+    name: libnode-dev
+    state: absent
+    force: yes
+  ignore_errors: yes
 
-    - name: Remove libnode72
-      apt:
-        name: libnode72
-        state: absent
-        force: yes
-        purge: yes
-        allow_unauthenticated: yes
-      ignore_errors: yes
+- name: Remove libnode72
+  apt:
+    name: libnode72
+    state: absent
+    force: yes
+    purge: yes
+    allow_unauthenticated: yes
+  ignore_errors: yes
 
-    - name: Install packages
-      apt:
-        pkg:
-          - php
-          - php-xml
-          - php-mysql
-          - libapache2-mod-php
-          - git
-          - zip
-          - unzip
-          - php-curl
-          - apache2
-          - composer
-      become: yes
+- name: Add Node.js repository
+  shell: curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+  args:
+    executable: /bin/bash
+  become: true
 
-    - name: Install Vite
-      npm:
-        name: vite
-        global: yes
+- name: Install Node.js
+  apt:
+    name: nodejs
+    state: present
+  ignore_errors: yes
+  become: true
 
-    - name: Add Node.js repository
-      shell: curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-      args:
-        executable: /bin/bash
+- name: Install packages
+  apt:
+    pkg:
+      - php
+      - php-xml
+      - php-mysql
+      - libapache2-mod-php
+      - git
+      - zip
+      - unzip
+      - php-curl
+      - apache2
+      - composer
+  become: yes
 
-    - name: Install Node.js
-      apt:
-        name: nodejs
-        state: present
-      ignore_errors: yes
+- name: Install Vite
+  npm:
+    name: vite
+    global: yes
 
-    - name: Create application directory
-      file:
-        path: "{{ app_directory }}"
-        state: directory
+- name: Create application directory
+  file:
+    path: "{{ app_directory }}"
+    state: directory
 
-    - name: Clone the repository
-      git:
-        repo: https://github.com/Practical-DevOps/app-for-devops.git
-        dest: "{{ app_directory }}"
-        version: main
+- name: Clone the repository
+  git:
+    repo: https://github.com/Practical-DevOps/app-for-devops.git
+    dest: "{{ app_directory }}"
+    version: main
 
-    - name: Download and install all libs and dependencies
-      community.general.composer:
-        command: install
-        working_dir: "{{ app_directory }}"
-        environment:
-          COMPOSER_ALLOW_SUPERUSER: 1
+- name: Download and install all libs and dependencies
+  community.general.composer:
+    command: install
+    working_dir: "{{ app_directory }}"
+    environment:
+      COMPOSER_ALLOW_SUPERUSER: 1
 
-    - name: Change ownership of the directory
-      ansible.builtin.shell: |
-        sudo chown -R $USER /var/www/app-for-devops
-      args:
-        executable: /bin/bash
+- name: Change ownership of the directory
+  ansible.builtin.shell: |
+    sudo chown -R $USER /var/www/app-for-devops
+  args:
+    executable: /bin/bash
 
-    - name: Set directory permissions
-      file:
-        path: "{{ app_directory }}/storage"
-        state: directory
-        recurse: yes
-        mode: "0777"
+- name: Set directory permissions
+  file:
+    path: "{{ app_directory }}/storage"
+    state: directory
+    recurse: yes
+    mode: "0777"
 
-    - name: Install frontend dependencies
-      command: npm install
-      args:
-        chdir: "{{ app_directory }}"
+- name: Install frontend dependencies
+  command: npm install
+  args:
+    chdir: "{{ app_directory }}"
 
-    - name: Build frontend assets
-      ansible.builtin.shell: npm run build
-      args:
-        chdir: "{{ app_directory }}"
+- name: Build frontend assets
+  ansible.builtin.shell: npm run build
+  args:
+    chdir: "{{ app_directory }}"
 
-    - name: Config Apache for application
-      ansible.builtin.template:
-        src: apache.conf.j2
-        dest: /etc/apache2/sites-available/app-for-devops.conf
+- name: Config Apache for application
+  ansible.builtin.template:
+    src: apache.conf.j2
+    dest: /etc/apache2/sites-available/app-for-devops.conf
 
-    - name: Enable the virtual host
-      command: a2ensite app-for-devops.conf
+- name: Enable the virtual host
+  command: a2ensite app-for-devops.conf
 
-    - name: Disable default virtual host
-      command: a2dissite 000-default
-      notify:
-        - Reload Apache
+- name: Disable default virtual host
+  command: a2dissite 000-default
+  notify:
+    - Reload Apache
 
-    - name: Enable Apache Rewrite Module
-      ansible.builtin.command: a2enmod rewrite
-      notify:
-        - Reload Apache
+- name: Enable Apache Rewrite Module
+  ansible.builtin.command: a2enmod rewrite
+  notify:
+    - Reload Apache
 
-    - name: Write application config file
-      ansible.builtin.template:
-        src: app.conf.j2
-        dest: "{{ app_directory }}/.env"
+- name: Write application config file
+  ansible.builtin.template:
+    src: app.conf.j2
+    dest: "{{ app_directory }}/.env"
 
-    - name: Generate Laravel key
-      command: php artisan key:generate
-      args:
-        chdir: "{{ app_directory }}"
+- name: Generate Laravel key
+  command: php artisan key:generate
+  args:
+    chdir: "{{ app_directory }}"
 
-    - name: Make migration
-      command: php artisan migrate
-      args:
-        chdir: "{{ app_directory }}"
+- name: Make migration
+  command: php artisan migrate
+  args:
+    chdir: "{{ app_directory }}"
