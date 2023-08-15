@@ -1,0 +1,50 @@
+---
+- name: Update package manager
+  become: true
+  apt:
+    force_apt_get: yes
+    update_cache: yes
+    state: present
+  tags:
+    - install
+    - core
+
+- name: Install packages
+  become: true
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - mariadb-server
+    - mariadb-client
+    - python3-mysqldb
+
+- name: Update MariaDB bind-address to allow connections from the app server
+  become: true
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: '^bind-address\s*='
+    line: 'bind-address = 0.0.0.0'
+  notify: Restart MariaDB
+
+- name: Create the application database
+  community.mysql.mysql_db:
+    name: "{{ db_name }}"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Create the application user
+  community.mysql.mysql_user:
+    name: "{{ db_user }}"
+    host: "{{ db_host }}"
+    password: "{{ db_pass }}"
+    priv: "*.*:ALL"
+    append_privs: yes
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Restart MariaDB
+  become: true
+  service:
+    name: mariadb
+    state: restarted
