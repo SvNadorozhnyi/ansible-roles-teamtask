@@ -73,8 +73,8 @@
   community.general.composer:
     command: install
     working_dir: "{{ app_directory }}"
-    environment:
-      COMPOSER_ALLOW_SUPERUSER: 1
+  environment:
+    COMPOSER_ALLOW_SUPERUSER: "1"
   become: yes
 
 - name: Change ownership of the directory
