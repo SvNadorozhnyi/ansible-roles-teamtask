@@ -1,8 +1,4 @@
 ---
-- name: Install and Configure Application
-  hosts: your_target_host
-  become: yes
-  tasks:
     - name: Update package repositories
       apt:
         update_cache: yes
