@@ -20,25 +20,20 @@
         allow_unauthenticated: yes
       ignore_errors: yes
 
-    - name: Install required packages (Apache, PHP, etc.)
+    - name: Install packages
       apt:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - php
-        - apache2
-        - unzip
-        - php-zip
-        - libapache2-mod-php
-        - composer
-        - git
-        - php-cli
-        - phpcurl
-        - php-bz2
-        - php-mbstring
-        - php-intl
-        - php-xml
-        - php-mysql
+        pkg:
+          - php
+          - php-xml
+          - php-mysql
+          - libapache2-mod-php
+          - git
+          - zip
+          - unzip
+          - php-curl
+          - apache2
+          - composer
+      become: yes
 
     - name: Install Vite
       npm:
