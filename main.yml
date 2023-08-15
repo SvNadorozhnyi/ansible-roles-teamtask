@@ -1,1 +1,10 @@
 ---
+- name: Install and configure MariaDB
+  hosts: db
+  roles:
+    - db
+
+- name: Deploy Laravel Application with Apache
+  hosts: server
+  roles:
+    - server
