@@ -25,7 +25,7 @@
     path: /etc/mysql/mariadb.conf.d/50-server.cnf
     regexp: '^bind-address\s*='
     line: 'bind-address = 0.0.0.0'
-  notify: Restart MariaDB
+
 
 - name: Create the application database
   community.mysql.mysql_db:
