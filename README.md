@@ -12,3 +12,4 @@ Here's an example of launching the playbook to install application on an Apache 
 ```bash
 ansible-playbook main.yml --extra-vars "db_host=db.some.net db_name=app_db db_user=app_user db_pass=app_pass"
 ```
+0
