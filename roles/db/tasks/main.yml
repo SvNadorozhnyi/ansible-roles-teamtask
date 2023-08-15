@@ -1,0 +1,74 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: true
+
+- name: Install MySQL client for Python
+  apt:
+    name: python3-mysqldb
+    state: present
+  become: true
+
+- name: Install MySQL client
+  apt:
+    name: mysql-client
+    state: present
+  become: true
+
+- name: Install mysqldump
+  apt:
+    name: mariadb-client
+  become: true
+
+- name: Install MariaDB
+  apt:
+    name: mariadb-server
+    state: present
+  become: true
+
+- name: Secure MariaDB
+  become: yes
+  expect:
+    command: mysql_secure_installation
+    responses:
+      'Enter current password for root': ''
+      'Set root password': 'n'
+      'Remove anonymous users': 'y'
+      'Disallow root login remotely': 'y'
+      'Remove test database': 'y'
+      'Reload privilege tables now': 'y'
+    timeout: 1
+  register: secure_mariadb
+  failed_when: "'... Failed!' in secure_mariadb.stdout_lines"
+
+- name: Configure MariaDB to listen on all IP addresses
+  lineinfile:
+    dest: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: '^bind-address'
+    line: "bind-address = 0.0.0.0"
+  become: true
+
+- name: Create a database
+  community.mysql.mysql_db:
+    name: "{{ db_name }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: true
+
+- name: Allow remote access for db_user
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_pass }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ db_pass }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: "%"
+    state: present
+  become: true
+
+- name: Restart MariaDB
+  service:
+    name: mariadb
+    state: restarted
+  become: true
