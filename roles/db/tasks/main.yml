@@ -25,13 +25,14 @@
     path: /etc/mysql/mariadb.conf.d/50-server.cnf
     regexp: '^bind-address\s*='
     line: 'bind-address = 0.0.0.0'
-
+  become: true
 
 - name: Create the application database
   community.mysql.mysql_db:
     name: "{{ db_name }}"
     state: present
     login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: true
 
 - name: Create the application user
   community.mysql.mysql_user:
@@ -42,9 +43,11 @@
     append_privs: yes
     state: present
     login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: true
 
 - name: Restart MariaDB
   become: true
   service:
     name: mariadb
     state: restarted
+  become: true
